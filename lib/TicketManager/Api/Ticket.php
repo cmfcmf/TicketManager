@@ -21,6 +21,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 *
 	 * @todo Set Enddate to null if not submitted.
 	 * @bug TCPDF Error if $number = 1.
+	 * @bug TCPDF Language file is not working.
 	 */
 	public function reserve($args)
 	{
@@ -141,10 +142,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			'module_height' => 1 // height of a single module in points
 		);
 
-		// set color for background
+		// set color for background to white
 		$pdf->SetFillColor(255, 255, 255);
-		// set cell padding
-		#$pdf->setCellPaddings(1, 1, 1, 1);
 
 		$offset = 25;
 		$qrSize = 60;
@@ -167,7 +166,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			}
 			
 			////Code Id
-			$codeId = self::generateQRCode($ids[$pageCounter]);
+			$codeId = self::generateHash($ids[$pageCounter]);
 			
 			////Startdate
 			$pdf->SetFont('helvetica', '', 18);
@@ -200,46 +199,17 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		//Close and output PDF document
 		$pdf->Output('Tickets.pdf', 'I');
 
-		return true;
-/*
-		$html = "";
-		for($i = 0; $i < $number; $i++)
-		{
-			$html .= self::printTicketHtml($eventname, self::generateQr($id), $shortdescription, $startdate, $enddate, $price, $picture, $logo);
-			#$pdf = self::printTicketPdf($pdf, $eventname, self::generateQr($id), $shortdescription, $startdate, $enddate, $price, $picture, $logo);
-			
-			// set style for barcode
-			$style = array(
-				'border' => 2,
-				'vpadding' => 'auto',
-				'hpadding' => 'auto',
-				'fgcolor' => array(0,0,0),
-				'bgcolor' => false, //array(255,255,255)
-				'module_width' => 1, // width of a single module in points
-				'module_height' => 1 // height of a single module in points
-			);
-
-			$pdf->write2DBarcode($id, 'QRCODE,H', 20, 210, 50, 50, $style, 'N');
-			$pdf->Text(20, 205, 'QRCODE H');
-
-			#$pdf->MultiCell(55, 5, '[LEFT] abc123', 1, 'L', 0, 0, '', '', true);
-		}
-		
-		$pdf->lastPage();
-
-		//Close and output PDF document
-		ob_end_clean();
-		$pdf->Output($title , 'I');
-		return true;
-		*/
-		#return self::printPdf(self::printTicket($eventname, ""/*self::generateQr($id)*/, $shortdescription, $startdate, $enddate, $price, $picture, $logo));
-		#return $html;
-		
+		return true;		
 	}
 	
-	private function generateQRCode($id)
+	/**
+	 * @brief Generates hash using the given $information.
+	 * @param int|string $information The information to create a hash of.
+	 * @return string The generated hash.
+	 */
+	private function generateHash($information)
 	{
-		return hash('crc32', $id);// * mt_rand(5, 20);
+		return hash('crc32', $information);
 	}
 	
 	/**
@@ -253,7 +223,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * 
 	 * @return string $html Html code for a ticket.
 	 *
-	 * @todo Paramter prüfen
+	 * @deprecated HTML tickets won't be supported
 	 */
 	private function printTicketHtml($eventname = null, $qrHtml = null, $shortdescription = null, $startdate = 0, $enddate = 0, $price = -1, $picture = null, $logo = null)
 	{
@@ -269,97 +239,15 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			->assign('qrHtml', $qrHtml)
 			->fetch('Ticket/Default.tpl');
 	}
-
-	/**
-	 * @param int $startdate The startdate of the tickets. 0 means endless (optional, default 0).
-	 * @param int $enddate The enddate of the tickets. 0 means endless (optional, default 0).
-	 * @param int $price Price for each ticket. -1 won't be printed (optional, default -1).
-	 * @param string $picture An absolute path to a picture to print on each ticket. (optional, default null).
-	 * @param string $args['logo'] An absolute path to a logo to print on each ticket. (optional, default null).
-	 * @param string $eventname The event name.
-	 * @param string $shortdescription A short event description (optional, default null).
-	 * 
-	 * @return string $html Html code for a ticket.
-	 *
-	 * @todo Paramter prüfen
-	 */
-	private function printTicketPdf($pdf, $eventname = null, $qrHtml = null, $shortdescription = null, $startdate = 0, $enddate = 0, $price = -1, $picture = null, $logo = null)
-	{
-		return $pdf;
-	}
-
-	/**
-	 * @param string $html The html content to print
-	 * @todo Paramter prüfen
-	 */
-	private function printPdf($html = null)
-	{
-		$classfile = DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/tcpdf.php');
-		include_once $classfile;
-		$lang = ZLanguage::getInstance();
-		$langcode = $lang->getLanguageCodeLegacy();
-		$langfile = DataUtil::formatForOS("modules/TicketManager/lib/vendor/tcpdf/config/lang/{$langcode}.php");
-		if (file_exists($langfile)) {
-			include_once $langfile;
-		} else {
-			// default to english
-			include_once DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/config/lang/eng.php');
-		}
-
-
-		// create new PDF document
-		$pdf = new TCPDF(P, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-		// set document information
-		$pdf->SetCreator($this->name);
-		$pdf->SetAuthor($this->name);
-		#$pdf->SetTitle($title);
-		#$pdf->SetSubject($title);
-
-		// set default header data
-		#$pdf->SetHeaderData('', '0px', $title, $this->__('Generated by:').' EventManager '.$this->__('and').' TCPDF'); ///@TODO %s!
-
-		// set header and footer fonts
-		#if (FormUtil::getPassedValue('mode', '', 'GET') != 'elternsprechtag')
-		#$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-		#else
-		#	$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', 20));
-		#$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-
-		// set default monospaced font
-		#$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-
-		//set margins
-		$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-		#$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-		#$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-
-		//set auto page breaks
-		$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-
-		//set image scale factor
-		#$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-
-		//set some language-dependent strings
-		$pdf->setLanguageArray($l);
-
-		// ---------------------------------------------------------
-
-		// set font
-		$pdf->SetFont('dejavusans', '', 10);
-
-		// add a page
-		$pdf->AddPage();
-
-		$pdf->writeHTML($html, true, false, true, false, '');
-		$pdf->lastPage();
-
-		//Close and output PDF document
-		ob_end_clean();
-		$pdf->Output($title , 'I');
-		return true;
-	}
 	
+	/**
+	 * @brief Generates an HTML QRCODE using tcpdf.
+	 * @param string|int|float $information The information to store in QRCODE.
+	 * 
+	 * @return string Generated HTML QRCODE.
+	 * 
+	 * @deprecated HTML tickets won't be supported.
+	 */
 	private function generateQr($information = null)
 	{
 		if(!isset($information))
