@@ -56,6 +56,13 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	 * @ORM\Column(type="array")
 	 */
 	private $information;
+	
+	/**
+	 * The following are annotations which define the qrcode field.
+	 *
+	 * @ORM\Column(type="string")
+	 */
+	private $qrCode;
 
 	public function getTid()
 	{
@@ -86,6 +93,12 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	{
 		return $this->module;
 	}
+	
+	public function getQRCode()
+	{
+		return $this->qrCode;
+	}
+	
 	/*
 	public function getDateFormatted()
 	{
@@ -116,5 +129,10 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	public function setModule($module)
 	{
 		$this->module = $module;
+	}
+	
+	public function setQRCode($qrCode)
+	{
+		$this->qrCode = $qrCode;
 	}
 }
