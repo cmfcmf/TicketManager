@@ -3,6 +3,4 @@ TicketManager
 
 Zikula 1.3.x module | In developement
 
-### What already works? ###
-* Reserving Tickets in database
-* Generating Tickets (pdf file)
+See the wiki for further information: [TicketManager wiki](http://github.com/cmfcmf/TicketManager/wiki)
