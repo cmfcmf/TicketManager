@@ -225,7 +225,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 */
 	private function generateQRCode()
 	{
-		return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, null);
+		//return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, null);
+		return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, uniqid());
 	}
 	
 	
