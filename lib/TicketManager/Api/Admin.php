@@ -20,8 +20,10 @@ class TicketManager_Api_Admin extends Zikula_AbstractApi
 		}
 		
 		$links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'test'),
-			'text' => $this->__('TEST'),
-			'class' => 'z-icon-es-user');
+			'text' => $this->__('Generate test-tickets'));
+		
+		$links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'depreciate'),
+			'text' => $this->__('Depreciate'));
 		/*
 		if (SecurityUtil::checkPermission('Profile::', '::', ACCESS_ADD)) {
 			$links[] = array('url' => ModUtil::url('Profile', 'admin', 'newdud'),

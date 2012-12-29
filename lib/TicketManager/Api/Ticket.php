@@ -20,6 +20,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
 	 *
 	 * @todo Set Enddate to null if not submitted.
+	 * @todo Check lines 30 to 50
+	 * @todo Use constants for ticket sizes
+	 * @todo DINA4 only (TCPDF)
+	 * @todo Make the ticket format configurable
 	 * @bug TCPDF Error if $number = 1.
 	 * @bug TCPDF Language file is not working.
 	 */
@@ -29,8 +33,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	
 		if(!is_integer($number) || $number < 1)
 			throw new Zikula_Exception_Fatal('$number is not valid!');
-		if(!is_integer($id) && !is_array($id))
-			throw new Zikula_Exception_Fatal('$id is not valid!');
+		#if(!is_integer($id) && !is_array($id))
+		#	throw new Zikula_Exception_Fatal('$id is not valid!');
 		if(!is_string($eventname))
 			throw new Zikula_Exception_Fatal('$eventname is not valid!');
 		if(!is_string($module))
@@ -57,29 +61,20 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
 		{
+			$qrCode = $this->generateQRCode();
+			
 			$ticket = new TicketManager_Entity_Tickets();
 			$ticket->setInformation($information);
 			$ticket->setStartdate($startdate);
 			$ticket->setEnddate($enddate);
 			$ticket->setModule($module);
+			$ticket->setQRCode($qrCode);
 			$ticket->setStatus(TicketManager_Constant::STATUS_RESERVED);
 
 			$this->entityManager->persist($ticket);
 			$this->entityManager->flush();
-			
-			
-			//get the last ticket id
-			$em = $this->getService('doctrine.entitymanager');
-			$qb = $em->createQueryBuilder();
-			$qb->select('p')
-			   ->from('TicketManager_Entity_Tickets', 'p')
-			   /*->where('p.name = :name')*/
-			   /*->setParameter('name', name)*/
-			   ->orderBy('p.tid', 'DESC')
-			   ->setMaxResults(1);
-			$tickets = $qb->getQuery()->getArrayResult();
 
-			$ids[] = $tickets[0]['tid'];
+			$QRCodes[$i] = $qrCode;
 		}
 		
 		
@@ -95,7 +90,6 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			include_once DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/config/lang/eng.php');
 		}
 		// create new PDF document
-		///@todo DINA4 only
 		$pdf = new TCPDF(P, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
 		// set document information
@@ -103,7 +97,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		$pdf->SetAuthor($this->name);
 		$pdf->SetTitle($eventname);
 		$pdf->SetSubject($this->name);
-		#$pdf->SetKeywords('TCPDF, PDF, example, test, guide');
+		#$pdf->SetKTESTeywords('TCPDF, PDF, example, test, guide');
 
 		// set default header data
 		$pdf->SetHeaderData("../../../../images/admin.png", 15, $eventname, "TicketManager (c) Christian Flach");
@@ -165,13 +159,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 				$i = 0;
 			}
 			
-			////Code Id
-			$codeId = self::generateHash($ids[$pageCounter]);
-			
 			////Startdate
 			$pdf->SetFont('helvetica', '', 18);
 			if(isset($startdate))
-				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, $this->__('Date').": ".date("j.m.Y H:i", strToTime($startdate))." &lt;$codeId&gt;", 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight+$contentSize, true, 0, true);
+				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, $this->__('Date').": ".date("j.m.Y H:i", strToTime($startdate))." &lt;$QRCodes[$pageCounter]&gt;", 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight+$contentSize, true, 0, true);
 			
 			////Title
 			$pdf->SetFont('helvetica', '', 18);
@@ -188,7 +179,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$imgSize-$qrSize, $contentSize, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$i, true, 0, true);
 	
 			////Barcode
-			$pdf->write2DBarcode($codeId, 'QRCODE,H', $pagewidth-PDF_MARGIN_RIGHT-$qrSize, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight, $qrSize, $qrSize, $style, 'N');
+			$pdf->write2DBarcode($QRCodes[$pageCounter], 'QRCODE,H', $pagewidth-PDF_MARGIN_RIGHT-$qrSize, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight, $qrSize, $qrSize, $style, 'N');
 	
 			////Price
 			// MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0, $ln=1, $x='', $y='', $reseth=true, $stretch=0, $ishtml=false, $autopadding=true, $maxh=0)
@@ -202,15 +193,52 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		return true;		
 	}
 	
+	public function depreciate($args)
+	{
+		extract($args);
+		
+		if(!isset($qrCode))
+			throw new InvalidArgumentException('$qrCode is missing');
+		
+		$ticket = $this->entityManager->getRepository('TicketManager_Entity_Tickets')->findOneBy(array('qrCode' => $qrCode));
+		
+		if(!isset($ticket))
+			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_QRCODE_NOT_FOUND;
+		
+		if($ticket->getEnddate()->getTimestamp() > time() && $ticket->getStartdate()->getTimestamp() <= time())
+			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
+		
+		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED)
+			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_ALREADY_DEPRECIATED;
+		
+		//All ok. Change status to DEPRECIATED.
+		$ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
+		$this->entityManager->persist($ticket);
+		$this->entityManager->flush();
+		
+		return ($mode == 'fullscreen') ? TicketManager_Constant::OK_PAGE : TicketManager_Constant::TICKET_DEPRECIATED;
+	}
+	
 	/**
-	 * @brief Generates hash using the given $information.
-	 * @param int|string $information The information to create a hash of.
+	 * @brief Generates a random qrcode.
 	 * @return string The generated hash.
 	 */
-	private function generateHash($information)
+	private function generateQRCode()
 	{
-		return hash('crc32', $information);
+		return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, null);
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/////////////////////////////////////////////////////////
+	//Not used, it may will be deleted later on.
+	/////////////////////////////////////////////////////////
 	
 	/**
 	 * @param int $startdate The startdate of the tickets. 0 means endless (optional, default 0).

@@ -8,7 +8,7 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 	{
 		$this->view->setCaching(Zikula_View::CACHE_DISABLED);
 	}
-	
+
 	/**
 	 * The default entrypoint.
 	 *
@@ -19,12 +19,12 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 		if (!SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
 			return LogUtil::registerPermissionError();
 		}
-		
+
 		return $this->view->fetch('Admin/Main.tpl');
 	}
-	
+
 	/**
-	 * The Profile help page.
+	 * The TicketManager help page.
 	 *
 	 * @return string The rendered template output.
 	 */
@@ -36,12 +36,57 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 
 		return $this->view->fetch('Admin/Help.tpl');
 	}
-	
+
+	/**
+	 * Function for depreciating a ticket via QR-Code.
+	 * @param GET $qrCode The QRCode.
+	 * @param GET $mode The display mode. Default is null.
+	 * @return string The rendered template output.
+	 */
+	public function depreciate()
+	{
+		if (!SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
+			return LogUtil::registerPermissionError();
+		}
+
+		$qrCode = FormUtil::getPassedValue("qrCode", null, "GET");
+		$mode = FormUtil::getPassedValue("mode", null, "GET");
+
+		if(!isset($qrCode))
+			return LogUtil::RegisterError('No $qrCode given! Use "&qrCode=abc" in the url.', null, ModUtil::url($this->name, 'admin', 'main'));
+
+		$return = ModUtil::apiFunc($this->name, 'Ticket', 'depreciate', array('qrCode' => $qrCode, 'mode' => $mode));
+
+		switch($return)
+		{
+			case TicketManager_Constant::TICKET_DEPRECIATED:
+				LogUtil::RegisterStatus("Ticket successfully depreciated!");
+				break;
+			case TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE:
+				LogUtil::RegisterError("Date range of ticket does not fit!");
+				break;
+			case TicketManager_Constant::TICKET_ALREADY_DEPRECIATED:
+				LogUtil::RegisterError("Ticket is already depreciated!");
+				break;
+			case TicketManager_Constant::TICKET_QRCODE_NOT_FOUND:
+				LogUtil::RegisterError("QRCode could not be found!");
+				break;
+		}
+
+		if($mode == 'fullscreen')
+		{
+			echo $return;
+			return true;
+		}
+		else
+			return $this->redirect(ModUtil::url($this->name, 'admin', 'main'));
+	}
+
 	public function test()
 	{
-		$return = ModUtil::apiFunc($this->name, 'Ticket', 'reserve', 
+		$return = ModUtil::apiFunc($this->name, 'Ticket', 'reserve',
 			array('number' => 2,
-				'eventname' =>'Testevent', 
+				'eventname' =>'Testevent',
 				'picture' => null, //Path to big picture
 				'module' => ModUtil::getIdFromName($this->name),
 				'logo' => null, //Path to little logo
@@ -49,9 +94,9 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 				'information' => array('uid' => 373),
 				'startdate' => '15.3.2013 12:00',
 				'shortdescription' => 'Lorem ipsum latinum dolorem sint sant sunt.'
-				)
+			)
 		);
-		
+
 		echo $return;
 		return true;
 	}
