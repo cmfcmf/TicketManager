@@ -9,8 +9,9 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param int $args['number'] Number of tickets to generate.
 	 * @param int $args['allowedDepreciatings']  How often a ticket can be depreciated. Use -1 for endless times. Default is 1.
 	 * @param array $args['information'] Further information to store in database. Will be ignored by TicketManager.
-	 * @param int $args['startdate'] The startdate of the tickets. 0 means endless (optional, default 0).
-	 * @param int $args['enddate'] The enddate of the tickets. 0 means endless (optional, default 0).
+	 * @param DateTime $args['eventdate'] The date to be printed onto the ticket (optional, default null).
+	 * @param DateTime $args['startdate'] The startdate of the tickets (optional, default 'Now').
+	 * @param DateTime $args['enddate'] The enddate of the tickets. null means endless (optional, default null).
 	 * @param int $args['price'] Price for each ticket. -1 won't be printed (optional, default -1).
 	 * @param string $args['eventname'] The event name (Printed largely onto the ticket).
 	 * @param string $args['shortdescription'] A short event description (optional, default null).
@@ -19,8 +20,6 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 *
 	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
 	 *
-	 * @todo Set Enddate to null if not submitted.
-	 * @todo Check lines 30 to 50
 	 * @todo Use constants for ticket sizes
 	 * @todo DINA4 only (TCPDF)
 	 * @todo Make the ticket format configurable
@@ -30,26 +29,25 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	{
 		extract($args);
 
+		////Required
 		if(!is_integer($number) || $number < 1)
 			throw new Zikula_Exception_Fatal('$number is not valid!');
-		#if(!is_integer($id) && !is_array($id))
-		#	throw new Zikula_Exception_Fatal('$id is not valid!');
 		if(!is_string($eventname))
 			throw new Zikula_Exception_Fatal('$eventname is not valid!');
 		if(!is_string($module))
 			throw new Zikula_Exception_Fatal('$module is not valid!');
 
-		#if(isset($startdate) && !is_integer($startdate))
-		#	throw new Zikula_Exception_Fatal('$startdate is not valid!');
-		#if(isset($enddate) && !is_integer($enddate))
-		#	throw new Zikula_Exception_Fatal('$enddate is not valid!');
+		////Optional
 		if(isset($price) && (!is_integer($price) || $price < -1))
 			throw new Zikula_Exception_Fatal('$price is not valid!');
+		
 		if(isset($shortdescription) && !is_string($shortdescription))
 			throw new Zikula_Exception_Fatal('$shortdescription is not valid!');
-		if(isset($picture) && !is_string($picture))
+		
+		if(isset($picture) && (!is_string($picture) || !is_readable($picture)))
 			throw new Zikula_Exception_Fatal('$picture is not valid!');
-		if(isset($logo) && !is_string($logo))
+		
+		if(isset($logo) && (!is_string($logo) || !is_readable($logo)))
 			throw new Zikula_Exception_Fatal('$logo is not valid!');
 
 		if(!is_integer($allowedDepreciatings) || $allowedDepreciatings < -1 || $allowedDepreciatings == 0)
@@ -57,7 +55,18 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		if(!isset($allowedDepreciatings))
 			$allowedDepreciatings = 1;
 
-
+		if(isset($startdate) && !is_a($startdate, 'DateTime'))
+			throw new Zikula_Exception_Fatal('$startdate has to be a DateTime object!');
+		//Set to current date if not set.
+		if(!isset($startdate))
+			$startdate = new \Datetime('now');
+		
+		if(isset($enddate) && !is_a($enddate, 'DateTime'))
+			throw new Zikula_Exception_Fatal('$enddate has to be a DateTime object!');
+		
+		if(isset($eventdate) && !is_a($eventdate, 'DateTime'))
+			throw new Zikula_Exception_Fatal('$eventdate has to be a DateTime object!');
+			
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
 		{
@@ -167,10 +176,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			}
 				
 			//Startdate
-			if(isset($startdate))
+			if(isset($eventdate))
 			{
 				$pdf->SetFont('helvetica', '', 18);
-				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, date("j.m.Y H:i", strToTime($startdate)), 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
+				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, $eventdate->format('d.m.Y H:i'), 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
 			}
 			//Qr-string
 			$pdf->SetFont('helvetica', '', 18);
@@ -181,11 +190,11 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, "<h1>$eventname</h1>", 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
 				
 			//Title logo
-			if(isset($logo) && is_readable($logo))
+			if(isset($logo))
 				$pdf->Image($logo, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, 0, $titleHeight, '', '', 'R', true, 150, 'R', false, false, 1, false, false, false);
 
 			//Big Picture
-			if(isset($picture) && is_readable($picture))
+			if(isset($picture))
 				$pdf->Image($picture, PDF_MARGIN_LEFT, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, $imgSize, $imgSize, '', '', '', true, 150, '', false, false, 1, false, false, false);
 
 			//Shortdescription

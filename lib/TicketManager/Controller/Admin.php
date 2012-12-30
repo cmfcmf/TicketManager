@@ -94,7 +94,8 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 				'logo' => 'images/zk-power.png', //Path to little logo
 				'price' => 4,
 				'information' => array('uid' => 373, 'foo' => 'bar'),
-				'startdate' => '15.3.2013 12:00',
+				'startdate' => new \DateTime('15.3.2013 12:00'),
+				'eventdate' => new \DateTime('1.2.1234 12:34'),
 				'shortdescription' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam'
 			)
 		);

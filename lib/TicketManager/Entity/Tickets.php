@@ -46,7 +46,7 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	/**
 	 * The following are annotations which define the enddate field.
 	 *
-	 * @ORM\Column(type="datetime")
+	 * @ORM\Column(type="datetime", nullable=true)
 	 */
 	private $enddate;
 	
@@ -60,7 +60,7 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	/**
 	 * The following are annotations which define the qrcode field.
 	 *
-	 * @ORM\Column(type="string")
+	 * @ORM\Column(type="string", length=30)
 	 */
 	private $qrCode;
 
@@ -122,12 +122,12 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 
 	public function setStartdate($date)
 	{
-		$this->startdate = new \DateTime($date);
+		$this->startdate = ($date);
 	}
 	
 	public function setEnddate($date)
 	{
-		$this->enddate = new \DateTime($date);
+		$this->enddate = ($date);
 	}
 	
 	public function setStatus($status)
