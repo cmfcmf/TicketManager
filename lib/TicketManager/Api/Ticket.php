@@ -28,7 +28,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param string $args['picture'] A path to a big picture to print on each ticket. (optional, default null).
 	 * @param string $args['logo'] A path to a small logo to print on each ticket. (optional, default null).
 	 *
-	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
+	 * @return true
 	 */
 	public function reserve($args)
 	{
