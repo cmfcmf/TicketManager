@@ -12,12 +12,11 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param int $args['startdate'] The startdate of the tickets. 0 means endless (optional, default 0).
 	 * @param int $args['enddate'] The enddate of the tickets. 0 means endless (optional, default 0).
 	 * @param int $args['price'] Price for each ticket. -1 won't be printed (optional, default -1).
-	 * @param string $args['eventname'] The event name.
+	 * @param string $args['eventname'] The event name (Printed largely onto the ticket).
 	 * @param string $args['shortdescription'] A short event description (optional, default null).
-	 * @param string $args['picture'] An absolute path to a picture to print on each ticket. (optional, default null).
-	 * @param string $args['logo'] An absolute path to a logo to print on each ticket. (optional, default null).
-	 * @param int $args['tickets_per_pdf'] -1 for all tickets (optional, default -1). NOT SUPPORTET YET!
-	 * 
+	 * @param string $args['picture'] A path to a big picture to print on each ticket. (optional, default null).
+	 * @param string $args['logo'] A path to a small logo to print on each ticket. (optional, default null).
+	 *
 	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
 	 *
 	 * @todo Set Enddate to null if not submitted.
@@ -30,7 +29,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	public function reserve($args)
 	{
 		extract($args);
-	
+
 		if(!is_integer($number) || $number < 1)
 			throw new Zikula_Exception_Fatal('$number is not valid!');
 		#if(!is_integer($id) && !is_array($id))
@@ -53,21 +52,17 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		if(isset($logo) && !is_string($logo))
 			throw new Zikula_Exception_Fatal('$logo is not valid!');
 
-		#if(!isset($tickets_per_pdf))
-			$tickets_per_pdf = -1;
-		
-		
 		if(!is_integer($allowedDepreciatings) || $allowedDepreciatings < -1 || $allowedDepreciatings == 0)
 			throw new Zikula_Exception_Fatal('$allowedDepreciatings is not valid!');
 		if(!isset($allowedDepreciatings))
 			$allowedDepreciatings = 1;
-		
-		
+
+
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
 		{
 			$qrCode = $this->generateQRCode();
-			
+
 			$ticket = new TicketManager_Entity_Tickets();
 			$ticket->setInformation($information);
 			$ticket->setStartdate($startdate);
@@ -82,10 +77,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 			$ticket->setQRCode($ticket->getQRCode() . $ticket->getTid());
 			$this->entityManager->flush();
-			
+
 			$qrCodes[$i] = $ticket->getQRCode();
 		}
-		
+
 		$classfile = DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/tcpdf.php');
 		include_once $classfile;
 		$lang = ZLanguage::getInstance();
@@ -95,7 +90,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		//http://github.com/cmfcmf/TicketManager/issues/3
 		if($langcode == 'deu')
 			$langcode = 'ger';
-		
+
 		$langfile = DataUtil::formatForOS("modules/TicketManager/lib/vendor/tcpdf/config/lang/{$langcode}.php");
 		if (file_exists($langfile)) {
 			include_once $langfile;
@@ -103,6 +98,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			// default to english
 			include_once DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/config/lang/eng.php');
 		}
+
 		// create new PDF document
 		$pdf = new TCPDF(P, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
@@ -169,7 +165,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 				$pdf->AddPage();
 				$ticketsThisPageCounter = 0;
 			}
-			
+				
 			//Startdate
 			if(isset($startdate))
 			{
@@ -179,11 +175,11 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			//Qr-string
 			$pdf->SetFont('helvetica', '', 18);
 			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, "&lt;$qrCodes[$ticketCounter]&gt;", 0, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
-				
+
 			//Title
 			$pdf->SetFont('helvetica', '', 18);
 			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, "<h1>$eventname</h1>", 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
-			
+				
 			//Title logo
 			if(isset($logo) && is_readable($logo))
 				$pdf->Image($logo, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, 0, $titleHeight, '', '', 'R', true, 150, 'R', false, false, 1, false, false, false);
@@ -198,10 +194,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 				$pdf->SetFont('helvetica', '', 13);
 				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$imgSize-$qrSize, $contentSize, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
 			}
-			
+				
 			//Barcode
 			$pdf->write2DBarcode($qrCodes[$ticketCounter], 'QRCODE,H', $pagewidth-PDF_MARGIN_RIGHT-$qrSize, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight, $qrSize, $qrSize, $style, 'N');
-			
+				
 			////Price
 			// MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0, $ln=1, $x='', $y='', $reseth=true, $stretch=0, $ishtml=false, $autopadding=true, $maxh=0)
 			#$pdf->SetFont('helvetica', '', 18);
@@ -210,38 +206,39 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 		//Close and output PDF document
 		$pdf->Output('Tickets.pdf', 'I');
-		return true;		
+
+		return true;
 	}
-	
+
 	public function depreciate($args)
 	{
 		extract($args);
-		
+
 		if(!isset($qrCode))
 			throw new InvalidArgumentException('$qrCode is missing');
-		
+
 		$ticket = $this->entityManager->getRepository('TicketManager_Entity_Tickets')->findOneBy(array('qrCode' => $qrCode));
 
 		if(!isset($ticket))
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_QRCODE_NOT_FOUND;
-		
+
 		if($ticket->getEnddate()->getTimestamp() > time() && $ticket->getStartdate()->getTimestamp() <= time())
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
-		
+
 		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED || !$ticket->isDepreciatingAllowed())
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_ALREADY_DEPRECIATED;
 
 		//All ok. Change status to DEPRECIATED.
-		
+
 		$ticket->setAllowedDepreciatings($ticket->getAllowedDepreciatings() - 1);
-		
+
 		//Ticket cannot be depreciated again
 		if(!$ticket->isDepreciatingAllowed())
 			$ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
-		
+
 		$this->entityManager->persist($ticket);
 		$this->entityManager->flush();
-		
+
 		//Call an api function of the module which reserved the tickets. If this function does not exist, nothing will happen.
 		$modinfo = ModUtil::getInfo($ticket->getModule());
 
@@ -252,10 +249,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			'qrCode'               => $ticket->getQRCode(),
 			'status'               => $ticket->getStatus(),
 			'allowedDepreciatings' => $ticket->getAllowedDepreciatings()));
-		
+
 		return ($mode == 'fullscreen') ? TicketManager_Constant::OK_PAGE : TicketManager_Constant::TICKET_DEPRECIATED;
 	}
-	
+
 	/**
 	 * @brief Generates a random qrcode.
 	 * @return string The randomly generated string.
@@ -265,19 +262,19 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		//return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, null);
 		return RandomUtil::getString(10, 10, false, true, true, false, true, false, false, uniqid());
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 	/////////////////////////////////////////////////////////
 	//Not used, it may will be deleted later on.
 	/////////////////////////////////////////////////////////
-	
+
 	/**
 	 * @param int $startdate The startdate of the tickets. 0 means endless (optional, default 0).
 	 * @param int $enddate The enddate of the tickets. 0 means endless (optional, default 0).
@@ -286,7 +283,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param string $args['logo'] An absolute path to a logo to print on each ticket. (optional, default null).
 	 * @param string $eventname The event name.
 	 * @param string $shortdescription A short event description (optional, default null).
-	 * 
+	 *
 	 * @return string $html Html code for a ticket.
 	 *
 	 * @deprecated HTML tickets won't be supported
@@ -294,24 +291,24 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	private function printTicketHtml($eventname = null, $qrHtml = null, $shortdescription = null, $startdate = 0, $enddate = 0, $price = -1, $picture = null, $logo = null)
 	{
 		$ticket = Zikula_View::getInstance($this->name);
-		
+
 		return $ticket->assign('eventname', $eventname)
-			->assign('shortdescription', $shortdescription)
-			->assign('startdate', $startdate)
-			->assign('enddate', $enddate)
-			->assign('price', $price)
-			->assign('picture', $picture)
-			->assign('logo', $logo)
-			->assign('qrHtml', $qrHtml)
-			->fetch('Ticket/Default.tpl');
+		->assign('shortdescription', $shortdescription)
+		->assign('startdate', $startdate)
+		->assign('enddate', $enddate)
+		->assign('price', $price)
+		->assign('picture', $picture)
+		->assign('logo', $logo)
+		->assign('qrHtml', $qrHtml)
+		->fetch('Ticket/Default.tpl');
 	}
-	
+
 	/**
 	 * @brief Generates an HTML QRCODE using tcpdf.
 	 * @param string|int|float $information The information to store in QRCODE.
-	 * 
+	 *
 	 * @return string Generated HTML QRCODE.
-	 * 
+	 *
 	 * @deprecated HTML tickets won't be supported.
 	 */
 	private function generateQr($information = null)
@@ -320,9 +317,9 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			throw new Zikula_Exception_Fatal('$information is not valid!');
 
 		include_once DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/2dbarcodes.php');
-		
+
 		$barcode = new TCPDF2DBarcode($information, 'QRCODE,H');
-		
+
 		return $barcode->getBarcodeHTML(9, 9);
 	}
 }
