@@ -227,6 +227,13 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		$this->entityManager->persist($ticket);
 		$this->entityManager->flush();
 		
+		//Call an api function of the module which reserved the tickets. If this function does not exist, nothing will happen.
+		ModUtil::apiFunc(ModUtil::getIdFromName($ticket->getModule()), 'TicketManager', 'depreciated', array(
+			'information' => $ticket->getInformation(),
+			'startdate'   => $ticket->getStartdate(),
+			'enddate'     => $ticket->getEnddate(),
+			'qrCode'      => $ticket->getQRCode()));
+		
 		return ($mode == 'fullscreen') ? TicketManager_Constant::OK_PAGE : TicketManager_Constant::TICKET_DEPRECIATED;
 	}
 	
