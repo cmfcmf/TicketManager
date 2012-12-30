@@ -229,7 +229,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		
 		//Call an api function of the module which reserved the tickets. If this function does not exist, nothing will happen.
 		$modinfo = ModUtil::getInfo($ticket->getModule());
-		ModUtil::apiFunc(ModUtil::getIdFromName($modinfo['name'], 'TicketManager', 'depreciated', array(
+
+		ModUtil::apiFunc($modinfo['name'], 'TicketManager', 'depreciated', array(
 			'information' => $ticket->getInformation(),
 			'startdate'   => $ticket->getStartdate(),
 			'enddate'     => $ticket->getEnddate(),
