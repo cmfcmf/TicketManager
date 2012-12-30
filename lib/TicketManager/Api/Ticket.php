@@ -156,15 +156,18 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 		$offset = 25;
 		$qrSize = 60;
-		$ticketHeight = 75;
 		$pagewidth = 210;
+		$ticketHeight = 75;
+		$ticketWidth = $pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT;
 		$titleHeight = 15;
 		$logoHeight_px = 30;
 		$imgSize = 50;
 		$ticketDistance = 8;
 		$contentSize = 50;
-
+		$shortdescriptionWidth = $ticketWidth-$imgSize-$qrSize;
 		$footerHeight = $ticketHeight - $contentSize - $titleHeight;
+		$shortdescriptionHeight = $imgSize;
+		
 
 		for($ticketsThisPageCounter = 0, $ticketCounter = 0; $ticketCounter < $number; $ticketCounter++, $ticketsThisPageCounter++)
 		{
@@ -186,12 +189,16 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, "&lt;$qrCodes[$ticketCounter]&gt;", 0, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
 
 			//Title
-			$pdf->SetFont('helvetica', '', 18);
-			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, "<h1>$eventname</h1>", 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
+			$pdf->SetFont('helvetica', '', 35);
+			for($size = 35; $pdf->GetStringWidth($eventname) > $ticketWidth; $size--)
+			{
+				$pdf->SetFont('helvetica', '', $size);
+			}
+			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, $eventname, 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
 				
 			//Title logo
-			if(isset($logo))
-				$pdf->Image($logo, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, 0, $titleHeight, '', '', 'R', true, 150, 'R', false, false, 1, false, false, false);
+			#if(isset($logo))
+			#	$pdf->Image($logo, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, 0, $titleHeight, '', '', 'R', true, 150, 'R', false, false, 1, false, false, false);
 
 			//Big Picture
 			if(isset($picture))
@@ -200,8 +207,12 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			//Shortdescription
 			if(isset($shortdescription))
 			{
-				$pdf->SetFont('helvetica', '', 13);
-				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$imgSize-$qrSize, $contentSize, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
+				$pdf->SetFont('helvetica', '', 20);
+				for($size = 20; $pdf->GetStringHeight($shortdescriptionWidth, $shortdescription) > $shortdescriptionHeight; $size--)
+				{
+					$pdf->SetFont('helvetica', '', $size);
+				}
+				$pdf->MultiCell($shortdescriptionWidth, $shortdescriptionHeight, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
 			}
 				
 			//Barcode
