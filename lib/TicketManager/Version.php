@@ -1,5 +1,17 @@
 <?php
+/**
+ * TicketManager
+ *
+ * @copyright  (c) TicketManager Team
+ * @link       http://github.com/cmfcmf/TicketManager/
+ * @license    GNU/GPL - http://www.gnu.org/copyleft/gpl.html
+ * @package    TicketManager
+ * @subpackage Version
+ */
 
+/**
+ * TicketManager Version Info.
+ */
 class TicketManager_Version extends Zikula_AbstractVersion
 {
 	public function getMetaData()

@@ -1,6 +1,16 @@
 <?php
 /**
- * @copyright Christian Flach
+ * TicketManager
+ *
+ * @copyright  (c) TicketManager Team
+ * @link       http://github.com/cmfcmf/TicketManager/
+ * @license    GNU/GPL - http://www.gnu.org/copyleft/gpl.html
+ * @package    TicketManager
+ * @subpackage Installer
+ */
+
+/**
+ * TicketManager Installer.
  */
 class TicketManager_Installer extends Zikula_AbstractInstaller
 {

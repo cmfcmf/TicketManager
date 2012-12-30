@@ -1,6 +1,16 @@
 <?php
 /**
- * @copyright Christian Flach
+ * TicketManager
+ *
+ * @copyright  (c) TicketManager Team
+ * @link       http://github.com/cmfcmf/TicketManager/
+ * @license    GNU/GPL - http://www.gnu.org/copyleft/gpl.html
+ * @package    TicketManager
+ * @subpackage Api
+ */
+
+/**
+ * TicketManager Api.
  */
 class TicketManager_Api_Ticket extends Zikula_AbstractApi
 {
