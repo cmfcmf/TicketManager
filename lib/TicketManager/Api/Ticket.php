@@ -19,11 +19,6 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param string $args['logo'] A path to a small logo to print on each ticket. (optional, default null).
 	 *
 	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
-	 *
-	 * @todo Use constants for ticket sizes
-	 * @todo DINA4 only (TCPDF)
-	 * @todo Make the ticket format configurable
-	 * @todo TCPDF Language file is not working.
 	 */
 	public function reserve($args)
 	{
@@ -109,7 +104,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		}
 
 		// create new PDF document
-		$pdf = new TCPDF(P, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+		$pdf = new TCPDF(P, 'mm', 'A4', true, 'UTF-8', false);
 
 		// set document information
 		$pdf->SetCreator($this->name);
