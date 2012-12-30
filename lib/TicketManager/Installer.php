@@ -32,6 +32,8 @@ class TicketManager_Installer extends Zikula_AbstractInstaller
 	{
 		switch($oldversion)
 		{
+			case '0.0.1':
+				break;
 			default:
 				return LogUtil::RegisterError($this->__('Upgrade of this version is not supported!'));
 		}
