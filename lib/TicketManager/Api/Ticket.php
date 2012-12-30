@@ -15,7 +15,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param string $args['shortdescription'] A short event description (optional, default null).
 	 * @param string $args['picture'] An absolute path to a picture to print on each ticket. (optional, default null).
 	 * @param string $args['logo'] An absolute path to a logo to print on each ticket. (optional, default null).
-	 * @param int $args['tickets_per_pdf'] -1 for all tickets (optional, default -1).
+	 * @param int $args['tickets_per_pdf'] -1 for all tickets (optional, default -1). NOT SUPPORTET YET!
 	 * 
 	 * @return string|array $return['pdf'] A pdf file with all tickets ($args['tickets_per_pdf'] = -1), else an array with pdf files, each including $args['tickets_per_pdf'] tickets.
 	 *
@@ -24,8 +24,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @todo Use constants for ticket sizes
 	 * @todo DINA4 only (TCPDF)
 	 * @todo Make the ticket format configurable
-	 * @bug TCPDF Error if $number = 1.
-	 * @bug TCPDF Language file is not working.
+	 * @todo TCPDF Language file is not working.
 	 */
 	public function reserve($args)
 	{
@@ -53,10 +52,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		if(isset($logo) && !is_string($logo))
 			throw new Zikula_Exception_Fatal('$logo is not valid!');
 
-		if(!isset($tickets_per_pdf))
+		#if(!isset($tickets_per_pdf))
 			$tickets_per_pdf = -1;
-		
-		$ids = array();
 		
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
@@ -74,14 +71,22 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$this->entityManager->persist($ticket);
 			$this->entityManager->flush();
 
-			$QRCodes[$i] = $qrCode;
+			$ticket->setQRCode($ticket->getQRCode() . $ticket->getTid());
+			$this->entityManager->flush();
+			
+			$qrCodes[$i] = $ticket->getQRCode();
 		}
-		
 		
 		$classfile = DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/tcpdf.php');
 		include_once $classfile;
 		$lang = ZLanguage::getInstance();
 		$langcode = $lang->getLanguageCodeLegacy();
+
+		//Small hack, see https://github.com/zikula-modules/News/issues/106 and
+		//http://github.com/cmfcmf/TicketManager/issues/3
+		if($langcode == 'deu')
+			$langcode = 'ger';
+		
 		$langfile = DataUtil::formatForOS("modules/TicketManager/lib/vendor/tcpdf/config/lang/{$langcode}.php");
 		if (file_exists($langfile)) {
 			include_once $langfile;
@@ -105,16 +110,12 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		// set header and footer fonts
 		$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
 		$pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-
-		// set default monospaced font
 		$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-
-		//set margins
 		$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
 		$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
 		$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
 
-		//set auto page breaks
+		//Disable auto page breaks
 		$pdf->SetAutoPageBreak(false, PDF_MARGIN_BOTTOM);
 
 		//set image scale factor
@@ -151,45 +152,55 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 		$footerHeight = $ticketHeight - $contentSize - $titleHeight;
 
-		for($i = 0, $pageCounter = 0; $pageCounter < $number; $pageCounter++, $i++)
+		for($ticketsThisPageCounter = 0, $ticketCounter = 0; $ticketCounter < $number; $ticketCounter++, $ticketsThisPageCounter++)
 		{
-			if($i % 3 == 0 && $i + 1 != $number)
+			//Generate a new page all three tickets.
+			if($ticketsThisPageCounter % 3 == 0)
 			{
 				$pdf->AddPage();
-				$i = 0;
+				$ticketsThisPageCounter = 0;
 			}
 			
-			////Startdate
-			$pdf->SetFont('helvetica', '', 18);
+			//Startdate
 			if(isset($startdate))
-				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, $this->__('Date').": ".date("j.m.Y H:i", strToTime($startdate))." &lt;$QRCodes[$pageCounter]&gt;", 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight+$contentSize, true, 0, true);
-			
-			////Title
+			{
+				$pdf->SetFont('helvetica', '', 18);
+				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, date("j.m.Y H:i", strToTime($startdate)), 0, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
+			}
+			//Qr-string
 			$pdf->SetFont('helvetica', '', 18);
-			// MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0, $ln=1, $x='', $y='', $reseth=true, $stretch=0, $ishtml=false, $autopadding=true, $maxh=0)
-			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, "<h1>$eventname</h1>", 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$i, true, 0, true);
-	
-			////Picture
-			if(isset($picture))
-				// Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', $resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, $border=0, $fitbox=false, $hidden=false, $fitonpage=false)
-				$pdf->Image($picture, PDF_MARGIN_LEFT, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$i, $imgSize, $imgSize, 'JPG', '', '', true, 150, '', false, false, 1, false, false, false);
+			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$qrSize, $footerHeight, "&lt;$qrCodes[$ticketCounter]&gt;", 0, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true);
+				
+			//Title
+			$pdf->SetFont('helvetica', '', 18);
+			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $ticketHeight, "<h1>$eventname</h1>", 1, 'L', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
+			
+			//Title logo
+			if(isset($logo) && is_readable($logo))
+				$pdf->Image($logo, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, 0, $titleHeight, '', '', 'R', true, 150, 'R', false, false, 1, false, false, false);
 
-			////Shortdescription
-			$pdf->SetFont('helvetica', '', 13);
-			$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$imgSize-$qrSize, $contentSize, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$i, true, 0, true);
-	
-			////Barcode
-			$pdf->write2DBarcode($QRCodes[$pageCounter], 'QRCODE,H', $pagewidth-PDF_MARGIN_RIGHT-$qrSize, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight, $qrSize, $qrSize, $style, 'N');
-	
+			//Big Picture
+			if(isset($picture) && is_readable($picture))
+				$pdf->Image($picture, PDF_MARGIN_LEFT, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, $imgSize, $imgSize, '', '', '', true, 150, '', false, false, 1, false, false, false);
+
+			//Shortdescription
+			if(isset($shortdescription))
+			{
+				$pdf->SetFont('helvetica', '', 13);
+				$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT-$imgSize-$qrSize, $contentSize, "<i>$shortdescription</i>", 0, 'L', 1, 1, PDF_MARGIN_LEFT+$imgSize, $offset+$titleHeight+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter, true, 0, true);
+			}
+			
+			//Barcode
+			$pdf->write2DBarcode($qrCodes[$ticketCounter], 'QRCODE,H', $pagewidth-PDF_MARGIN_RIGHT-$qrSize, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight, $qrSize, $qrSize, $style, 'N');
+			
 			////Price
 			// MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0, $ln=1, $x='', $y='', $reseth=true, $stretch=0, $ishtml=false, $autopadding=true, $maxh=0)
 			#$pdf->SetFont('helvetica', '', 18);
-			#$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, "<img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"$logo\" /><img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"/modules/TicketManager/images/admin.png\" />{$price}€", 1, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$i+$titleHeight+$contentSize, true, 0, true, false, $footerHeight);
+			#$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, "<img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"$logo\" /><img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"/modules/TicketManager/images/admin.png\" />{$price}€", 1, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true, false, $footerHeight);
 		}
 
 		//Close and output PDF document
 		$pdf->Output('Tickets.pdf', 'I');
-
 		return true;		
 	}
 	
@@ -221,7 +232,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	
 	/**
 	 * @brief Generates a random qrcode.
-	 * @return string The generated hash.
+	 * @return string The randomly generated string.
 	 */
 	private function generateQRCode()
 	{
