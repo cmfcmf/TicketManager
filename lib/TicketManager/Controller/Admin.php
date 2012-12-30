@@ -87,6 +87,7 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 		$return = ModUtil::apiFunc($this->name, 'Ticket', 'reserve',
 			array(
 				'number' => 4,
+				'allowedDepreciatings' => 1,
 				'eventname' =>'Testevent',
 				'picture' => 'images/logo.gif', //Path to big picture
 				'module' => ModUtil::getIdFromName($this->name),

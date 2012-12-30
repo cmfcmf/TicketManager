@@ -7,7 +7,7 @@ class TicketManager_Version extends Zikula_AbstractVersion
 		$modversion['name']           = 'TicketManager';
 		$modversion['displayname']    = 'TicketManager';
 		$modversion['description']    = $this->__('Manage your TICKETS easy!');
-		$modversion['version']        = '0.0.2';
+		$modversion['version']        = '0.0.3';
 		$modversion['official']       = false;
 		$modversion['author']         = 'Christian Flach';
 		$modversion['contact']        = 'cmfcmf.flach@gmail.com';

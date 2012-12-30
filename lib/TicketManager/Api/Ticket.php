@@ -7,6 +7,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	/**
 	 * @brief Reserves X tickets and returns a pdf file to print.
 	 * @param int $args['number'] Number of tickets to generate.
+	 * @param int $args['allowedDepreciatings']  How often a ticket can be depreciated. Use -1 for endless times. Default is 1.
 	 * @param array $args['information'] Further information to store in database. Will be ignored by TicketManager.
 	 * @param int $args['startdate'] The startdate of the tickets. 0 means endless (optional, default 0).
 	 * @param int $args['enddate'] The enddate of the tickets. 0 means endless (optional, default 0).
@@ -55,6 +56,13 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		#if(!isset($tickets_per_pdf))
 			$tickets_per_pdf = -1;
 		
+		
+		if(!is_integer($allowedDepreciatings) || $allowedDepreciatings < -1 || $allowedDepreciatings == 0)
+			throw new Zikula_Exception_Fatal('$allowedDepreciatings is not valid!');
+		if(!isset($allowedDepreciatings))
+			$allowedDepreciatings = 1;
+		
+		
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
 		{
@@ -66,6 +74,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$ticket->setEnddate($enddate);
 			$ticket->setModule($module);
 			$ticket->setQRCode($qrCode);
+			$ticket->setAllowedDepreciatings($allowedDepreciatings);
 			$ticket->setStatus(TicketManager_Constant::STATUS_RESERVED);
 
 			$this->entityManager->persist($ticket);
@@ -212,18 +221,24 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			throw new InvalidArgumentException('$qrCode is missing');
 		
 		$ticket = $this->entityManager->getRepository('TicketManager_Entity_Tickets')->findOneBy(array('qrCode' => $qrCode));
-		
+
 		if(!isset($ticket))
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_QRCODE_NOT_FOUND;
 		
 		if($ticket->getEnddate()->getTimestamp() > time() && $ticket->getStartdate()->getTimestamp() <= time())
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
 		
-		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED)
+		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED || !$ticket->isDepreciatingAllowed())
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_ALREADY_DEPRECIATED;
-		
+
 		//All ok. Change status to DEPRECIATED.
-		$ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
+		
+		$ticket->setAllowedDepreciatings($ticket->getAllowedDepreciatings() - 1);
+		
+		//Ticket cannot be depreciated again
+		if(!$ticket->isDepreciatingAllowed())
+			$ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
+		
 		$this->entityManager->persist($ticket);
 		$this->entityManager->flush();
 		
@@ -231,10 +246,12 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		$modinfo = ModUtil::getInfo($ticket->getModule());
 
 		ModUtil::apiFunc($modinfo['name'], 'TicketManager', 'depreciated', array(
-			'information' => $ticket->getInformation(),
-			'startdate'   => $ticket->getStartdate(),
-			'enddate'     => $ticket->getEnddate(),
-			'qrCode'      => $ticket->getQRCode())));
+			'information'          => $ticket->getInformation(),
+			'startdate'            => $ticket->getStartdate(),
+			'enddate'              => $ticket->getEnddate(),
+			'qrCode'               => $ticket->getQRCode(),
+			'status'               => $ticket->getStatus(),
+			'allowedDepreciatings' => $ticket->getAllowedDepreciatings()));
 		
 		return ($mode == 'fullscreen') ? TicketManager_Constant::OK_PAGE : TicketManager_Constant::TICKET_DEPRECIATED;
 	}

@@ -64,6 +64,13 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	 */
 	private $qrCode;
 
+	/**
+	 * The following are annotations which define the allowedDepreciatings field.
+	 *
+	 * @ORM\Column(type="integer")
+	 */	
+	private $allowedDepreciatings;
+	
 	public function getTid()
 	{
 		return $this->tid;
@@ -99,12 +106,19 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 		return $this->qrCode;
 	}
 	
-	/*
-	public function getDateFormatted()
+	public function getAllowedDepreciatings()
 	{
-		return $this->date->format('d.m.Y G:i');
+		return $this->allowedDepreciatings;
 	}
-	*/
+	
+	/**
+	 * @return bool True if depreciating is ok, False if not.
+	 */
+	public function isDepreciatingAllowed()
+	{
+		//-1 means endless
+		return ($this->allowedDepreciatings > 0 || $this->allowedDepreciatings == -1) ? true : false;
+	}
 
 	public function setStartdate($date)
 	{
@@ -134,5 +148,10 @@ class TicketManager_Entity_Tickets extends Zikula_EntityAccess
 	public function setQRCode($qrCode)
 	{
 		$this->qrCode = $qrCode;
+	}
+	
+	public function setAllowedDepreciatings($allowedDepreciatings)
+	{
+		$this->allowedDepreciatings = $allowedDepreciatings;
 	}
 }
