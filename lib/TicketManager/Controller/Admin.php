@@ -106,11 +106,10 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 				'information' => array('uid' => 373, 'foo' => 'bar'),
 				'startdate' => new \DateTime('15.3.2013 12:00'),
 				'eventdate' => new \DateTime('1.2.1234 12:34'),
-				'shortdescription' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam'
+				'shortdescription' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam',
+				'pdfOutput' => 'file'
 			)
 		);
-
-		echo $return;
-		return true;
+		return LogUtil::registerStatus('File saved at ' . $return, ModUtil::url($this->name, 'admin', 'main'));
 	}
 }

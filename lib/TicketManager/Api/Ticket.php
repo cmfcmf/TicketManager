@@ -27,8 +27,9 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 	 * @param string $args['shortdescription'] A short event description (optional, default null).
 	 * @param string $args['picture'] A path to a big picture to print on each ticket. (optional, default null).
 	 * @param string $args['logo'] A path to a small logo to print on each ticket. (optional, default null).
+	 * @param string $args['pdfOutput'] 'direct' to return the tickets in browser, 'file' to save the tickets on the server (optional, default 'direct')
 	 *
-	 * @return true
+	 * @return bool|string If pdfOutput is 'direct' it returns true, else it returns the path to the generated pdf file.
 	 */
 	public function reserve($args)
 	{
@@ -72,6 +73,9 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		if(isset($eventdate) && !is_a($eventdate, 'DateTime'))
 			throw new Zikula_Exception_Fatal('$eventdate has to be a DateTime object!');
 			
+		if(!isset($pdfOutput))
+			$pdfOutput = 'direct';
+
 		//Create database entry for each ticket.
 		for($i = 0; $i < $number; $i++)
 		{
@@ -229,10 +233,17 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			#$pdf->MultiCell($pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT, $footerHeight, "<img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"$logo\" /><img height=\"$logoHeight_px\" width=\"$logoHeight_px\" src=\"/modules/TicketManager/images/admin.png\" />{$price}€", 1, 'R', 1, 1, PDF_MARGIN_LEFT, $offset+($ticketDistance+$ticketHeight)*$ticketsThisPageCounter+$titleHeight+$contentSize, true, 0, true, false, $footerHeight);
 		}
 
-		//Close and output PDF document
-		$pdf->Output('Tickets.pdf', 'I');
-
-		return true;
+		if($pdfOutput == 'direct')
+		{
+			$pdf->Output('Tickets.pdf', 'I');
+			return true;
+		}
+		else
+		{
+			$pathToFile = '/var/www/ztemp/Tickets.pdf';
+			$pdf->Output($pathToFile,'F');
+			return $pathToFile;
+		}	
 	}
 
 	public function depreciate($args)
