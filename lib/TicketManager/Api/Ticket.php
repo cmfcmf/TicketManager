@@ -56,7 +56,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		
 		if(isset($logo) && (!is_string($logo) || !is_readable($logo)))
 			throw new Zikula_Exception_Fatal('$logo is not valid!');
-		if(!isset($logo)
+		if(!isset($logo))
 			$logo = "../../../../images/admin.png";
 
 		if(isset($headerText) && !is_string($headerText))
@@ -136,7 +136,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		#$pdf->SetKeywords('TCPDF, PDF, example, test, guide');
 
 		// set default header data
-		$pdf->SetHeaderData($logo, 15, $eventname, $headerText);
+		$pdf->SetHeaderData(null, 15, $eventname, $headerText);
 
 		// set header and footer fonts
 		$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
@@ -244,9 +244,11 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		}
 		else
 		{
-			$pathToFile = dirname(__FILE__)  . '../../../../../../ztemp/Tickets.pdf';
+		    //Create directory in ztemp if it doesn't exists.
+		    CacheUtil::createLocalDir('TicketManager', null, false);
+			$pathToFile = CacheUtil::getLocalDir('TicketManager') . '/' . $qrCodes[0] . '.pdf';
 			$pdf->Output($pathToFile,'F');
-			return '/'.DataUtil::formatForOS($pathToFile);
+			return $pathToFile;
 		}	
 	}
 
