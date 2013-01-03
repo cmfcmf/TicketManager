@@ -66,7 +66,9 @@ class TicketManager_Installer extends Zikula_AbstractInstaller
 				} catch (Exception $e) {
 					return LogUtil::registerError($e);
 				}
-				return true;
+			case '0.0.4':
+			case '0.0.5':
+			    return true;
 			default:
 				return LogUtil::RegisterError($this->__('Upgrade of this version is not supported!'));
 		}
