@@ -92,6 +92,14 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
             return $this->redirect(ModUtil::url($this->name, 'admin', 'main'));
     }
 
+    public function clearCache()
+    {
+        if(CacheUtil::removeLocalDir('TicketManager', false))
+            return LogUtil::registerStatus('Cache cleared!', ModUtil::url($this->name, 'admin', 'main'));
+        else
+            return LogUtil::registerError('Cache clearing failed!', null, ModUtil::url($this->name, 'admin', 'main'));
+    }
+
     public function test()
     {
         $return = ModUtil::apiFunc($this->name, 'Ticket', 'reserve',
