@@ -136,7 +136,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		#$pdf->SetKeywords('TCPDF, PDF, example, test, guide');
 
 		// set default header data
-		$pdf->SetHeaderData(null, 15, $eventname, $headerText);
+		$pdf->SetHeaderData($logo, 15, $eventname, $headerText);
 
 		// set header and footer fonts
 		$pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));

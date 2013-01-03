@@ -109,7 +109,7 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
                 'eventname' =>'Testevent',
                 'picture' => 'images/logo.gif', //Path to big picture
                 'module' => ModUtil::getIdFromName($this->name),
-                'logo' => null, //Path to little logo CURRENTLY NOT WORKING!
+                'logo' => 'images/logo.gif', //Path to little logo CURRENTLY NOT WORKING!
                 'price' => 4,
                 'information' => array('uid' => 373, 'foo' => 'bar'),
                 'startdate' => new \DateTime('15.3.2013 12:00'),
