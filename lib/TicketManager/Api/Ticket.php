@@ -240,9 +240,9 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		}
 		else
 		{
-			$pathToFile = '/var/www/ztemp/Tickets.pdf';
+			$pathToFile = dirname(__FILE__)  . '../../../../../../ztemp/Tickets.pdf';
 			$pdf->Output($pathToFile,'F');
-			return $pathToFile;
+			return '/'.DataUtil::formatForOS($pathToFile);
 		}	
 	}
 
