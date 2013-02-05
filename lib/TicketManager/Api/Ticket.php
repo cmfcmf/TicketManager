@@ -45,7 +45,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			throw new Zikula_Exception_Fatal('$module is not valid!');
 
 		////Optional
-		if(isset($price) && (!is_integer($price) || $price < -1))
+		if(isset($price) && !(is_string($price) || is_numeric($price)))
 			throw new Zikula_Exception_Fatal('$price is not valid!');
 		
 		if(isset($shortdescription) && !is_string($shortdescription))
@@ -112,13 +112,13 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		$lang = ZLanguage::getInstance();
 		$langcode = $lang->getLanguageCodeLegacy();
 
-		//Small hack, see https://github.com/zikula-modules/News/issues/106 and
+		//Hack, see https://github.com/zikula-modules/News/issues/106 and
 		//http://github.com/cmfcmf/TicketManager/issues/3
 		if($langcode == 'deu')
 			$langcode = 'ger';
 
 		$langfile = DataUtil::formatForOS("modules/TicketManager/lib/vendor/tcpdf/config/lang/{$langcode}.php");
-		if (file_exists($langfile)) {
+		if (is_readable($langfile)) {
 			include_once $langfile;
 		} else {
 			// default to english
@@ -258,40 +258,51 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 		if(!isset($qrCode))
 			throw new InvalidArgumentException('$qrCode is missing');
+		if(!isset($mode))
+		    $mode = 'normal';
+		if(!isset($dryRun))
+		    $dryRun = false;
 
 		$ticket = $this->entityManager->getRepository('TicketManager_Entity_Tickets')->findOneBy(array('qrCode' => $qrCode));
 
 		if(!isset($ticket))
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_QRCODE_NOT_FOUND;
 
-		if($ticket->getEnddate()->getTimestamp() > time() && $ticket->getStartdate()->getTimestamp() <= time())
-			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
+        if($ticket->getStartdate() != null) //Not endless time
+            if($ticket->getStartdate()->getTimestamp() <= time())
+                return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
+
+        if($ticket->getEnddate() != null) //Not endless time
+            if($ticket->getEnddate()->getTimestamp() > time())
+                return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
 
 		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED || !$ticket->isDepreciatingAllowed())
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_ALREADY_DEPRECIATED;
 
-		//All ok. Change status to DEPRECIATED.
+		//All ok. Change status to DEPRECIATED if it isn't a dry run:
+		
+		if(!$dryRun)
+        {
+		    $ticket->setAllowedDepreciatings($ticket->getAllowedDepreciatings() - 1);
 
-		$ticket->setAllowedDepreciatings($ticket->getAllowedDepreciatings() - 1);
+		    //Ticket cannot be depreciated again
+		    if(!$ticket->isDepreciatingAllowed())
+			    $ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
 
-		//Ticket cannot be depreciated again
-		if(!$ticket->isDepreciatingAllowed())
-			$ticket->setStatus(TicketManager_Constant::STATUS_DEPRECIATED);
+		    $this->entityManager->persist($ticket);
+		    $this->entityManager->flush();
 
-		$this->entityManager->persist($ticket);
-		$this->entityManager->flush();
+		    //Call an api function of the module which reserved the tickets. If this function does not exist, nothing will happen.
+		    $modinfo = ModUtil::getInfo($ticket->getModule());
 
-		//Call an api function of the module which reserved the tickets. If this function does not exist, nothing will happen.
-		$modinfo = ModUtil::getInfo($ticket->getModule());
-
-		ModUtil::apiFunc($modinfo['name'], 'TicketManager', 'depreciated', array(
-			'information'          => $ticket->getInformation(),
-			'startdate'            => $ticket->getStartdate(),
-			'enddate'              => $ticket->getEnddate(),
-			'qrCode'               => $ticket->getQRCode(),
-			'status'               => $ticket->getStatus(),
-			'allowedDepreciatings' => $ticket->getAllowedDepreciatings()));
-
+		    ModUtil::apiFunc($modinfo['name'], 'TicketManager', 'depreciated', array(
+			    'information'          => $ticket->getInformation(),
+			    'startdate'            => $ticket->getStartdate(),
+			    'enddate'              => $ticket->getEnddate(),
+			    'qrCode'               => $ticket->getQRCode(),
+			    'status'               => $ticket->getStatus(),
+			    'allowedDepreciatings' => $ticket->getAllowedDepreciatings()));
+        }
 		return ($mode == 'fullscreen') ? TicketManager_Constant::OK_PAGE : TicketManager_Constant::TICKET_DEPRECIATED;
 	}
 

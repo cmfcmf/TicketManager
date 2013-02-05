@@ -68,6 +68,13 @@ class TicketManager_Installer extends Zikula_AbstractInstaller
                 }
             case '0.0.4':
             case '0.0.5':
+                try {
+                    DoctrineHelper::updateSchema($this->entityManager, array(
+                        'TicketManager_Entity_Tickets'
+                    ));
+                } catch (Exception $e) {
+                    return LogUtil::registerError($e);
+                }
                 return true;
             default:
                 return LogUtil::RegisterError($this->__('Upgrade of this version is not supported!'));

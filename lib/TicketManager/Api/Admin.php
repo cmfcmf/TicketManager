@@ -29,11 +29,6 @@ class TicketManager_Api_Admin extends Zikula_AbstractApi
                 'class' => 'z-icon-es-config');
         }
         if (SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
-            $links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'help'),
-                            'text' => $this->__('Help'),
-                            'class' => 'z-icon-es-help');
-        }
-        if (SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
             $links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'clearCache'),
                             'text' => $this->__('Clear cache'),
                             'class' => 'z-icon-es-cancel');
@@ -44,6 +39,12 @@ class TicketManager_Api_Admin extends Zikula_AbstractApi
         
         $links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'depreciate'),
             'text' => $this->__('Depreciate'));
+      
+        if (SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
+            $links[] = array('url' => ModUtil::url('TicketManager', 'admin', 'help'),
+                            'text' => $this->__('Help'),
+                            'class' => 'z-icon-es-help');
+        }
 
         return $links;
     }

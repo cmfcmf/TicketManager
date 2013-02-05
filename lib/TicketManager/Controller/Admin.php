@@ -61,35 +61,44 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
 
         $qrCode = FormUtil::getPassedValue("qrCode", null, "GET");
         $mode = FormUtil::getPassedValue("mode", null, "GET");
+        $dryRun = FormUtil::getPassedValue("dryRun", false, "GET");
+
+        if($dryRun)
+            LogUtil::registerStatus($this->__("Didn't write anything to database. Only dry-running."));
 
         if(!isset($qrCode))
-            return LogUtil::RegisterError('No $qrCode given! Use "&qrCode=abc" in the url.', null, ModUtil::url($this->name, 'admin', 'main'));
-
-        $return = ModUtil::apiFunc($this->name, 'Ticket', 'depreciate', array('qrCode' => $qrCode, 'mode' => $mode));
-
-        switch($return)
         {
-            case TicketManager_Constant::TICKET_DEPRECIATED:
-                LogUtil::RegisterStatus("Ticket successfully depreciated!");
-                break;
-            case TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE:
-                LogUtil::RegisterError("Date range of ticket does not fit!");
-                break;
-            case TicketManager_Constant::TICKET_ALREADY_DEPRECIATED:
-                LogUtil::RegisterError("Ticket is already depreciated!");
-                break;
-            case TicketManager_Constant::TICKET_QRCODE_NOT_FOUND:
-                LogUtil::RegisterError("QRCode could not be found!");
-                break;
-        }
-
-        if($mode == 'fullscreen')
-        {
-            echo $return;
-            return true;
+            $form = FormUtil::newForm($this->name, $this);
+            return $form->execute('Admin/Depreciate.tpl', new TicketManager_Form_Handler_Admin_Depreciate());
         }
         else
-            return $this->redirect(ModUtil::url($this->name, 'admin', 'main'));
+        {
+            $return = ModUtil::apiFunc($this->name, 'Ticket', 'depreciate', array('qrCode' => $qrCode, 'mode' => $mode, 'dryRun' => $dryRun));
+
+            switch($return)
+            {
+                case TicketManager_Constant::TICKET_DEPRECIATED:
+                    LogUtil::RegisterStatus("Ticket successfully depreciated!");
+                    break;
+                case TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE:
+                    LogUtil::RegisterError("Date range of ticket does not fit!");
+                    break;
+                case TicketManager_Constant::TICKET_ALREADY_DEPRECIATED:
+                    LogUtil::RegisterError("Ticket is already depreciated!");
+                    break;
+                case TicketManager_Constant::TICKET_QRCODE_NOT_FOUND:
+                    LogUtil::RegisterError("QRCode could not be found!");
+                    break;
+            }
+
+            if($mode == 'fullscreen')
+            {
+                echo $return;
+                return true;
+            }
+            else
+                return $this->redirect(ModUtil::url($this->name, 'admin', 'depreciate'));
+        }
     }
 
     public function clearCache()

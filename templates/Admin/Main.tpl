@@ -1,5 +1,5 @@
 {include file='Admin/Header.tpl' icon='config' __title='Configuration'}
 
-<div class="z-statusmsg">{gt text='Nothing to configure yet!'}</div>
+<p>{gt text='Nothing to configure yet!'}</p>
 
 {include file='Admin/Footer.tpl'}
