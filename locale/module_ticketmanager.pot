@@ -1,0 +1,83 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Zikula 1.x\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-02-05 01:02-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: lib/TicketManager/Form/Handler/Admin/Depreciate.php:32
+msgid "Depreciating canceled"
+msgstr ""
+
+#: lib/TicketManager/Api/Admin.php:28 templates/Admin/Main.tpl:1
+msgid "Configuration"
+msgstr ""
+
+#: lib/TicketManager/Api/Admin.php:33
+msgid "Clear cache"
+msgstr ""
+
+#: lib/TicketManager/Api/Admin.php:38
+msgid "Generate test-tickets"
+msgstr ""
+
+#: lib/TicketManager/Api/Admin.php:41 templates/Admin/Depreciate.tpl:1
+#: templates/Admin/Depreciate.tpl:21
+msgid "Depreciate"
+msgstr ""
+
+#: lib/TicketManager/Api/Admin.php:45 templates/Admin/Help.tpl:1
+msgid "Help"
+msgstr ""
+
+#: lib/TicketManager/Controller/Admin.php:67
+msgid "Didn't write anything to database. Only dry-running."
+msgstr ""
+
+#: lib/TicketManager/Installer.php:80
+msgid "Upgrade of this version is not supported!"
+msgstr ""
+
+#: lib/TicketManager/Version.php:21
+msgid "Manage your TICKETS easy!"
+msgstr ""
+
+#: templates/Admin/Main.tpl:3
+msgid "Nothing to configure yet!"
+msgstr ""
+
+#: templates/Admin/Help.tpl:3
+#, php-format
+msgid "Please visit %s for further information, help and bug tracking."
+msgstr ""
+
+#: templates/Admin/Depreciate.tpl:7
+msgid "Depreciate tickets"
+msgstr ""
+
+#: templates/Admin/Depreciate.tpl:9
+msgid "QR-Code"
+msgstr ""
+
+#: templates/Admin/Depreciate.tpl:13
+msgid "Mode"
+msgstr ""
+
+#: templates/Admin/Depreciate.tpl:22
+msgid "Cancel"
+msgstr ""
+
+#: templates/Header.tpl:13
+msgid "Please activate Javascript!"
+msgstr ""
