@@ -100,6 +100,20 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
                 return $this->redirect(ModUtil::url($this->name, 'admin', 'depreciate'));
         }
     }
+    
+    /**
+     * Function for generating tickets
+     * @return Form TicketManager_Form_Handler_Admin_Generate
+     */
+    public function generate()
+    {
+        if (!SecurityUtil::checkPermission('TicketManager::', '::', ACCESS_ADMIN)) {
+            return LogUtil::registerPermissionError();
+        }
+
+        $form = FormUtil::newForm($this->name, $this);
+        return $form->execute('Admin/Generate.tpl', new TicketManager_Form_Handler_Admin_Generate());
+    }
 
     public function clearCache()
     {
@@ -124,9 +138,10 @@ class TicketManager_Controller_Admin extends Zikula_AbstractController
                 'startdate' => new \DateTime('15.3.2013 12:00'),
                 'eventdate' => new \DateTime('1.2.1234 12:34'),
                 'shortdescription' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam',
-                'pdfOutput' => 'file'
+                'pdfOutput' => 'direct'
             )
         );
-        return LogUtil::registerStatus('File saved at ' . $return, ModUtil::url($this->name, 'admin', 'main'));
+        return true;
+        #return LogUtil::registerStatus($this->__f('File saved at %s', $return), ModUtil::url($this->name, 'admin', 'main'));
     }
 }

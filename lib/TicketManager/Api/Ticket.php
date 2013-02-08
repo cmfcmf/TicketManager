@@ -57,7 +57,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		if(isset($logo) && (!is_string($logo) || !is_readable($logo)))
 			throw new Zikula_Exception_Fatal('$logo is not valid!');
 		if(!isset($logo))
-			$logo = "../../../../images/admin.png";
+			$logo = "modules/TicketManager/images/admin.png";
 
 		if(isset($headerText) && !is_string($headerText))
 			throw new Zikula_Exception_Fatal('$headerText is no valid!');
@@ -171,9 +171,10 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 		// set color for background to white
 		$pdf->SetFillColor(255, 255, 255);
 
+        //All values in mm
 		$offset = 25;
 		$qrSize = 60;
-		$pagewidth = 210;
+		$pagewidth = 210; //DINA4 width
 		$ticketHeight = 75;
 		$ticketWidth = $pagewidth-PDF_MARGIN_RIGHT-PDF_MARGIN_LEFT;
 		$titleHeight = 15;
@@ -239,7 +240,7 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 
 		if($pdfOutput == 'direct')
 		{
-			$pdf->Output('Tickets.pdf', 'I');
+			return $pdf->Output('Tickets.pdf', 'I');
 			return true;
 		}
 		else

@@ -1,7 +1,6 @@
 {include file='Admin/Header.tpl' icon='' __title='Depreciate'}
 
 {form cssClass='z-form'}
-    {formerrormessage id='error'}
     {formvalidationsummary}
     <fieldset>
         <legend>{gt text='Depreciate tickets'}</legend>
