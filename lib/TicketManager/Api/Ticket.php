@@ -270,11 +270,11 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_QRCODE_NOT_FOUND;
 
         if($ticket->getStartdate() != null) //Not endless time
-            if($ticket->getStartdate()->getTimestamp() <= time())
+            if($ticket->getStartdate()->getTimestamp() >= time())
                 return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
 
         if($ticket->getEnddate() != null) //Not endless time
-            if($ticket->getEnddate()->getTimestamp() > time())
+            if($ticket->getEnddate()->getTimestamp() < time())
                 return ($mode == 'fullscreen') ? TicketManager_Constant::ERROR_PAGE : TicketManager_Constant::TICKET_FITS_NOT_DATE_RANGE;
 
 		if($ticket->getStatus() != TicketManager_Constant::STATUS_RESERVED || !$ticket->isDepreciatingAllowed())
