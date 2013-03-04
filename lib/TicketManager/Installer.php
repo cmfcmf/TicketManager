@@ -25,6 +25,11 @@ class TicketManager_Installer extends Zikula_AbstractInstaller
      */
     public function install()
     {
+        if(!PluginUtil::isAvailable(PluginUtil::getServiceId('SystemPlugin_Tcpdf_Plugin'))) {
+            $url = 'https://www.github.com/cmfcmf/Tcpdf';
+            return LogUtil::registerError($this->__f('You must install the TCPDF SystemPlugin! You can download it here: %s.', "<a href=\"$url\">$url</a>"));
+        }
+
         $this->setVars($this->getDefaultModVars());
 
         try {

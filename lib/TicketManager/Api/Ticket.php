@@ -107,26 +107,8 @@ class TicketManager_Api_Ticket extends Zikula_AbstractApi
 			$qrCodes[$i] = $ticket->getQRCode();
 		}
 
-		$classfile = DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/tcpdf.php');
-		include_once $classfile;
-		$lang = ZLanguage::getInstance();
-		$langcode = $lang->getLanguageCodeLegacy();
-
-		//Hack, see https://github.com/zikula-modules/News/issues/106 and
-		//http://github.com/cmfcmf/TicketManager/issues/3
-		if($langcode == 'deu')
-			$langcode = 'ger';
-
-		$langfile = DataUtil::formatForOS("modules/TicketManager/lib/vendor/tcpdf/config/lang/{$langcode}.php");
-		if (is_readable($langfile)) {
-			include_once $langfile;
-		} else {
-			// default to english
-			include_once DataUtil::formatForOS('modules/TicketManager/lib/vendor/tcpdf/config/lang/eng.php');
-		}
-
-		// create new PDF document
-		$pdf = new TCPDF(P, 'mm', 'A4', true, 'UTF-8', false);
+		$tcpdf = PluginUtil::loadPlugin('SystemPlugin_Tcpdf_Plugin');
+		$pdf = $tcpdf->createPdf('P', 'mm', 'A4', true, 'UTF-8', false);
 
 		// set document information
 		$pdf->SetCreator($this->name);
