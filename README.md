@@ -5,6 +5,7 @@ TicketManager is a module for Zikula 1.3.x. It can be used to dynamically genera
 See the wiki for further information: [TicketManager wiki](http://github.com/cmfcmf/TicketManager/wiki).
 
 ### **This module needs the [TCPDF Systemplugin](https://github.com/cmfcmf/Tcpdf-zk)!**
+
 License
 =======
 GNU/GPLv3 (or at your option, any later version).
