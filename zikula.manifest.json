@@ -12,7 +12,8 @@
     "extension": {
         "title": "TicketManager",
         "type": "m",
-        "url": "https://github.com/cmfcmf/TicketManager"
+        "url": "https://github.com/cmfcmf/TicketManager",
+        "icon": "https://raw.github.com/cmfcmf/TicketManager/master/images/admin.png"
     },
     "version": {
         "semver": "0.0.10",
