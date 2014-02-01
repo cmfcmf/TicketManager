@@ -16,7 +16,7 @@
         "icon": "https://raw.github.com/cmfcmf/TicketManager/master/images/admin.png"
     },
     "version": {
-        "semver": "0.0.11",
+        "semver": "0.0.12",
         "compatibility": "~1.3",
         "licenses": [
             {
