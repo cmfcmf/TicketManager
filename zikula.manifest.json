@@ -1,0 +1,43 @@
+{
+    "vendor": {
+        "title": "Christian Flach (cmfcmf)",
+        "url": "http://cmfcmf.github.io",
+        "logo": "https://gravatar.com/avatar/7ed38fddec9e6f79b68797cceb4577c2?s=200",
+        "owner": {
+            "name": "Christian Flach",
+            "email": "cmfcmf.flach@gmail.com",
+            "url": "http://cmfcmf.github.io"
+        }
+    },
+    "extension": {
+        "title": "TicketManager",
+        "type": "m",
+        "url": "https://github.com/cmfcmf/TicketManager"
+    },
+    "version": {
+        "semver": "0.0.10",
+        "compatibility": "~1.3",
+        "licenses": [
+            {
+                "type": "MIT",
+                "url": "https://github.com/cmfcmf/TicketManager/LICENSE"
+            }
+        ],
+        "description": "A helper module to create tickets using TCPDF. <b>In development!</b>",
+        "keywords": [
+            "tickets",
+            "TCPDF",
+            "helper"
+        ],        
+        "urls": {
+            "issues": "https://github.com/cmfcmf/TicketManager/issues"
+        }
+    },
+    "contributors": [
+        {
+            "name": "Christian Flach",
+            "email": "cmfcmf.flach@gmail.com",
+            "url": "http://cmfcmf.github.io"
+        }
+    ]
+}
